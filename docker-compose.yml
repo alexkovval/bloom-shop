@@ -1,0 +1,22 @@
+# MongoDB as a single-node replica set. Plain standalone MongoDB can't run
+# multi-document transactions, which the checkout endpoint needs for its
+# idempotency guarantee (re-price + create order + decrement stock + clear
+# cart all have to commit or roll back together) — see ARCHITECTURE_PLAN.md
+# §4. A replica set is required for transactions even with just one node.
+#
+# First-time setup (after `docker compose up -d`):
+#   docker exec bloom-beauty-mongo mongosh --eval "rs.initiate()"
+# Only needs to be run once — the replica set config persists in the
+# mongo-data volume across restarts.
+services:
+  mongo:
+    image: mongo:7
+    container_name: bloom-beauty-mongo
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
