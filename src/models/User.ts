@@ -1,4 +1,4 @@
-import { Schema, model, models, type Document } from "mongoose";
+import { Schema, model, models, type Document, type Model } from "mongoose";
 
 export interface UserDocument extends Document {
   email: string;
@@ -19,4 +19,8 @@ const userSchema = new Schema<UserDocument>(
 
 // `models.User` guards against Mongoose recompiling the model on every hot
 // reload in dev, which would otherwise throw "Cannot overwrite `User` model".
-export const User = (models.User as ReturnType<typeof model<UserDocument>>) || model<UserDocument>("User", userSchema);
+// (Annotating the const directly — rather than casting via
+// `ReturnType<typeof model<T>>` — avoids a TS overload-resolution error
+// against newer Mongoose typings; `typeof model<T>` outside a real call
+// doesn't resolve overloads the way an actual call does.)
+export const User: Model<UserDocument> = models.User || model<UserDocument>("User", userSchema);

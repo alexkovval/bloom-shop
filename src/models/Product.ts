@@ -1,4 +1,4 @@
-import { Schema, model, models, type Document } from "mongoose";
+import { Schema, model, models, type Document, type Model } from "mongoose";
 
 // Deliberately not a 1:1 port of the Postgres schema — see
 // ARCHITECTURE_PLAN.md §3. Prices are integer cents throughout.
@@ -32,6 +32,6 @@ const productSchema = new Schema<ProductDocument>(
 productSchema.index({ name: "text", description: "text" });
 productSchema.index({ category: 1 });
 
-export const Product =
-  (models.Product as ReturnType<typeof model<ProductDocument>>) ||
-  model<ProductDocument>("Product", productSchema);
+// See User.ts for why this is a plain annotation, not a ReturnType cast.
+export const Product: Model<ProductDocument> =
+  models.Product || model<ProductDocument>("Product", productSchema);

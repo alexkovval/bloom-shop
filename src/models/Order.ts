@@ -1,4 +1,4 @@
-import { Schema, model, models, type Document, type Types } from "mongoose";
+import { Schema, model, models, type Document, type Model, type Types } from "mongoose";
 
 export interface OrderItemSnapshot {
   productId: Types.ObjectId;
@@ -81,5 +81,6 @@ const orderSchema = new Schema<OrderDocument>(
 
 orderSchema.index({ userId: 1, createdAt: -1 });
 
-export const Order =
-  (models.Order as ReturnType<typeof model<OrderDocument>>) || model<OrderDocument>("Order", orderSchema);
+// See User.ts for why this is a plain annotation, not a ReturnType cast.
+export const Order: Model<OrderDocument> =
+  models.Order || model<OrderDocument>("Order", orderSchema);

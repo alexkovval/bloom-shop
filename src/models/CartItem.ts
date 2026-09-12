@@ -1,4 +1,4 @@
-import { Schema, model, models, type Document, type Types } from "mongoose";
+import { Schema, model, models, type Document, type Model, type Types } from "mongoose";
 
 export interface CartItemDocument extends Document {
   userId: Types.ObjectId;
@@ -22,6 +22,6 @@ const cartItemSchema = new Schema<CartItemDocument>(
 // scanning for an existing line first. See ARCHITECTURE_PLAN.md §3.
 cartItemSchema.index({ userId: 1, productId: 1 }, { unique: true });
 
-export const CartItem =
-  (models.CartItem as ReturnType<typeof model<CartItemDocument>>) ||
-  model<CartItemDocument>("CartItem", cartItemSchema);
+// See User.ts for why this is a plain annotation, not a ReturnType cast.
+export const CartItem: Model<CartItemDocument> =
+  models.CartItem || model<CartItemDocument>("CartItem", cartItemSchema);
