@@ -6,17 +6,17 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import { User } from "../models/User";
 import { Product, CATEGORIES, type Category } from "../models/Product";
-import { CATEGORY_IMAGE } from "../lib/categoryImages";
+import { PRODUCT_IMAGE } from "../lib/productImages";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   throw new Error("Missing MONGODB_URI env var — copy .env.example to .env and fill it in");
 }
 
-// Photos live in public/images/ and are served by Next automatically — no
-// hand-written static route needed, unlike the mobile app's Express backend.
-// (Category → filename mapping now lives in lib/categoryImages.ts, shared
-// with the homepage banner.)
+// Each product gets its own real photo (hotlinked from Unsplash — see
+// lib/productImages.ts) instead of one shared photo per category. The
+// homepage hero/category tiles still use the separate categoryImages.ts
+// mapping, which is unaffected by this.
 
 const PRODUCTS: Array<{
   name: string;
@@ -169,11 +169,11 @@ async function main() {
   console.log("Connected to MongoDB");
 
   for (const p of PRODUCTS) {
-    await Product.updateOne(
-      { name: p.name },
-      { $set: { ...p, imageUrl: CATEGORY_IMAGE[p.category] } },
-      { upsert: true }
-    );
+    const imageUrl = PRODUCT_IMAGE[p.name];
+    if (!imageUrl) {
+      throw new Error(`No entry in lib/productImages.ts for product "${p.name}"`);
+    }
+    await Product.updateOne({ name: p.name }, { $set: { ...p, imageUrl } }, { upsert: true });
   }
   console.log(`Seeded/updated ${PRODUCTS.length} products across ${CATEGORIES.length} categories`);
 
