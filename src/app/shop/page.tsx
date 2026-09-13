@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CATEGORIES } from "@/models/Product";
 import { listProducts } from "@/lib/queries";
 import { ProductCard } from "@/components/ProductCard";
@@ -43,7 +44,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             if (category) params.set("category", category);
             params.set("page", String(p));
             return (
-              <a
+              <Link
                 key={p}
                 href={`/shop?${params.toString()}`}
                 className={`px-3 py-1 rounded-md border ${
@@ -51,7 +52,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 }`}
               >
                 {p}
-              </a>
+              </Link>
             );
           })}
         </div>

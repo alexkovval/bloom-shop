@@ -59,11 +59,48 @@ export async function getProductById(id: string) {
 export async function listOrdersForUser(userId: string) {
   await connectDB();
   const orders = await Order.find({ userId }).sort({ createdAt: -1 });
-  return orders.map(serializeOrder);
+  return attachProductImages(orders.map(serializeOrder));
 }
 
 export async function getOrderForUser(userId: string, orderId: string) {
   await connectDB();
   const order = await Order.findOne({ _id: orderId, userId });
-  return order ? serializeOrder(order) : null;
+  if (!order) return null;
+  const [withImage] = await attachProductImages([serializeOrder(order)]);
+  return withImage;
+}
+
+type OrderWithoutImages = ReturnType<typeof serializeOrder>;
+
+// Order.items only ever snapshots name/price/quantity (see Order.ts and
+// ARCHITECTURE_PLAN.md §3/§4 — the point of a snapshot is that it never
+// changes even if the product does), so there's no imageUrl to embed
+// there. Rather than add one — which would mean a schema migration and
+// would still leave every already-placed order with no photo — this just
+// looks up each item's CURRENT product photo for display. If a product is
+// later deleted, imageUrl comes back null and the UI falls back to a
+// placeholder; that's a display nicety, not something the order total or
+// history depends on.
+async function attachProductImages(orders: OrderWithoutImages[]) {
+  const ids = Array.from(new Set(orders.flatMap((order) => order.items.map((item) => item.productId))));
+  // Both branches must return the same shape (items carrying imageUrl) —
+  // otherwise TS infers the union of both return types and widens
+  // order.items back to the no-imageUrl shape at every call site.
+  if (ids.length === 0) {
+    return orders.map((order) => ({
+      ...order,
+      items: order.items.map((item) => ({ ...item, imageUrl: null as string | null })),
+    }));
+  }
+
+  const products = await Product.find({ _id: { $in: ids } }, { imageUrl: 1 });
+  const imageByProductId = new Map(products.map((p) => [p.id as string, p.imageUrl as string]));
+
+  return orders.map((order) => ({
+    ...order,
+    items: order.items.map((item) => ({
+      ...item,
+      imageUrl: imageByProductId.get(item.productId) ?? null,
+    })),
+  }));
 }

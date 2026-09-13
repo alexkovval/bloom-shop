@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/apiClient";
+import { useCart } from "@/features/cart/hooks/useCart";
 
 interface MeResponse {
   user: { id: string; email: string; name: string };
@@ -20,6 +21,10 @@ export function NavBar() {
     retry: false,
   });
 
+  // Only fires once we know there's a session — see useCart's `enabled`.
+  const { data: cart } = useCart(!!data?.user);
+  const cartCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+
   async function handleLogout() {
     await apiFetch("/api/auth/logout", { method: "POST" });
     queryClient.clear();
@@ -35,7 +40,17 @@ export function NavBar() {
         <Link href="/shop">Shop</Link>
         {data?.user ? (
           <>
-            <Link href="/cart">Cart</Link>
+            <Link href="/cart" className="relative">
+              Cart
+              {cartCount > 0 ? (
+                <span
+                  key={cartCount}
+                  className="animate-cart-bump absolute -right-3 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-medium text-white"
+                >
+                  {cartCount}
+                </span>
+              ) : null}
+            </Link>
             <Link href="/orders">Orders</Link>
             <span className="text-neutral-500">{data.user.name}</span>
             <button onClick={handleLogout} className="text-neutral-500 hover:text-black">

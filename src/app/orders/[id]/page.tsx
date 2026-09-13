@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import mongoose from "mongoose";
 import { requireUser, UnauthorizedError } from "@/lib/auth";
@@ -40,8 +41,15 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
       <div className="flex flex-col gap-3 mb-6">
         {order.items.map((item, i) => (
-          <div key={`${item.productId}-${i}`} className="flex justify-between text-sm">
-            <span>
+          <div key={`${item.productId}-${i}`} className="flex items-center gap-3 text-sm">
+            {/* Current product photo, not a price/name-style snapshot — see
+                attachProductImages in lib/queries.ts. */}
+            <div className="relative h-12 w-12 shrink-0 rounded-md bg-neutral-100 overflow-hidden">
+              {item.imageUrl ? (
+                <Image src={item.imageUrl} alt="" fill sizes="48px" className="object-cover" />
+              ) : null}
+            </div>
+            <span className="flex-1">
               {item.name} × {item.quantity}
             </span>
             <span>${((item.priceCents * item.quantity) / 100).toFixed(2)}</span>
@@ -49,7 +57,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 text-sm border-t border-neutral-200 pt-4 mb-6">
+      <div className="flex-col gap-2 text-sm border-t border-neutral-200 pt-4 mb-6">
         <div className="flex justify-between">
           <span className="text-neutral-500">Subtotal</span>
           <span>${(order.subtotalCents / 100).toFixed(2)}</span>

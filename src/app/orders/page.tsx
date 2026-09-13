@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { requireUser, UnauthorizedError } from "@/lib/auth";
 import { listOrdersForUser } from "@/lib/queries";
@@ -30,16 +31,35 @@ export default async function OrdersPage() {
             <Link
               key={order.id}
               href={`/orders/${order.id}`}
-              className="flex justify-between items-center rounded-lg border border-neutral-200 px-4 py-3 hover:shadow-sm transition"
+              className="flex justify-between items-center gap-3 rounded-lg border border-neutral-200 px-4 py-3 hover:shadow-sm transition"
             >
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">Order #{order.id.slice(-6)}</span>
-                <span className="text-xs text-neutral-500">
-                  {new Date(order.createdAt).toLocaleDateString()} · {order.items.length} item
-                  {order.items.length === 1 ? "" : "s"}
-                </span>
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Representative thumbnail — the first line item's current
+                    product photo, not a snapshot. See attachProductImages
+                    in lib/queries.ts for why there's no per-order-item
+                    snapshot photo. */}
+                <div className="relative h-12 w-12 shrink-0 rounded-md bg-neutral-100 overflow-hidden">
+                  {order.items[0]?.imageUrl ? (
+                    <Image
+                      src={order.items[0].imageUrl}
+                      alt=""
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium">Order #{order.id.slice(-6)}</span>
+                  <span className="text-xs text-neutral-500">
+                    {new Date(order.createdAt).toLocaleDateString()} · {order.items.length} item
+                    {order.items.length === 1 ? "" : "s"}
+                  </span>
+                </div>
               </div>
-              <span className="text-sm font-medium">${(order.totalCents / 100).toFixed(2)}</span>
+              <span className="text-sm font-medium shrink-0">
+                ${(order.totalCents / 100).toFixed(2)}
+              </span>
             </Link>
           ))}
         </div>
